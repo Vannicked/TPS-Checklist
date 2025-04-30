@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Checklist</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-4">Project Checklist</h1>
+
+    <div class="mb-6">
+      <input id="itemText" type="text" placeholder="New item..." class="border p-2 rounded w-full mb-2">
+      <button onclick="addItem()" class="bg-blue-500 text-white px-4 py-2 rounded">Add Item</button>
+    </div>
+
+    <ul id="checklist" class="space-y-4"></ul>
+  </div>
+
+  <script>
+    let items = JSON.parse(localStorage.getItem('checklist')) || [];
+
+    function saveItems() {
+      localStorage.setItem('checklist', JSON.stringify(items));
+    }
+
+    function renderItems() {
+      const list = document.getElementById('checklist');
+      list.innerHTML = '';
+
+      items.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'bg-white p-4 rounded shadow';
+
+        li.innerHTML = `
+          <div class="flex items-center justify-between">
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleDone(${index})">
+              <span class="${item.done ? 'line-through text-gray-400' : ''}">${item.text}</span>
+            </label>
+            <button onclick="deleteItem(${index})" class="text-red-500">Delete</button>
+          </div>
+          <div class="mt-2">
+            <textarea placeholder="Add notes..." class="w-full border p-2 rounded" onchange="updateNote(${index}, this.value)">${item.note || ''}</textarea>
+            <input type="file" accept="image/*" onchange="addImage(event, ${index})" class="mt-2">
+            ${item.image ? `<img src="${item.image}" alt="Item image" class="mt-2 w-full rounded">` : ''}
+          </div>
+        `;
+
+        list.appendChild(li);
+      });
+    }
+
+    function addItem() {
+      const input = document.getElementById('itemText');
+      if (input.value.trim() !== '') {
+        items.push({ text: input.value, done: false, note: '', image: '' });
+        input.value = '';
+        saveItems();
+        renderItems();
+      }
+    }
+
+    function toggleDone(index) {
+      items[index].done = !items[index].done;
+      saveItems();
+      renderItems();
+    }
+
+    function deleteItem(index) {
+      items.splice(index, 1);
+      saveItems();
+      renderItems();
+    }
+
+    function updateNote(index, value) {
+      items[index].note = value;
+      saveItems();
+    }
+
+    function addImage(event, index) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          items[index].image = e.target.result;
+          saveItems();
+          renderItems();
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Initial render
+    renderItems();
+  </script>
+</body>
+</html>
